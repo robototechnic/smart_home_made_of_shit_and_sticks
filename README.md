@@ -1,7 +1,9 @@
 # arduino_pro_mini_433_sensors
 Sketches for low power wireless climate sensors based on
-  -arduino pro mini
-  -DHT22
+
+-arduino pro mini
+
+-DHT22
   -receivers and transmitters at a frequency of 433 MHz
 Libraries
   DHT - https://github.com/adafruit/DHT-sensor-library
