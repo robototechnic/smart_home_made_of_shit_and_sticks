@@ -1,82 +1,58 @@
-//transmitter
+// transmitter
 #include <VirtualWire.h> 
 #include <EasyTransferVirtualWire.h> 
 #include <LowPower.h>
 #include <DHT.h>
-#define DHTPIN 3
+#define DHTPIN 3      // to which contact the sensor is connected
 #define DHTTYPE DHT22
 
-DHT dht(DHTPIN, DHTTYPE);
-const int led_pin = 13;
-const int transmit_pin = 2;
-
-int inpin = 0;
-double vcc = 5.0;
-unsigned int count = 1;
-int last_data_1;
-int last_data_2;
-int last_data_3;
-int last_data_4;
-
 EasyTransferVirtualWire ET;
-struct SEND_DATA_STRUCTURE {
-  unsigned int source_id = 2;
-  unsigned int destination_id = 1;
+DHT dht(DHTPIN, DHTTYPE);
+
+//const byte led_pin = 13;      // built-in led
+const byte transmit_pin = 2;      // to which contact the transmitter is connected
+int last_data[4];     // count of commands
+
+struct SEND_DATA_STRUCTURE {      // information package
+  byte source_id = 2;     // this device id
+  byte destination_id = 1;     // which device will receive the signal
   unsigned int packet_id; 
-  byte command; 
+  byte command;     // command number
   int data;
-} mydata;
+} mydata;     // name of structure
 
-int Transmitting( byte command, int data) {
-  switch (command) {
-    case 1:
-      if (last_data_1 != data) {
-        last_data_1 = data;
-        mydata.command = command;
-        mydata.data = data;
-        ET.sendData();
-        mydata.packet_id = count++;
-      }
-      break;
-    case 2:
-      if (last_data_2 != data) {
-        last_data_2 = data;
-        mydata.command = command;
-        mydata.data = data;
-        ET.sendData();
-        mydata.packet_id = count++;
-      }
-      break;
-    case 3:
-      if (last_data_3 != data) {
-        last_data_3 = data;
-        mydata.command = command;
-        mydata.data = data;
-        ET.sendData();
-        mydata.packet_id = count++;
-      }
-      break;
-    case 4:
-      if (last_data_4 != data) {
-        last_data_4 = data;
-        mydata.command = command;
-        mydata.data = data;
-        ET.sendData();
-        mydata.packet_id = count++;
-      }
-      break;
+long readVcc() {
+  // read 1.1V reference against AVcc
+  // set the reference to Vcc and the measurement to the internal 1.1V reference
+  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+  delay(200);     // wait for Vref to settle
+  ADCSRA |= _BV(ADSC);      // start conversion
+  while (bit_is_set(ADCSRA,ADSC));      // measuring
+  byte low  = ADCL;     // must read ADCL first - it then locks ADCH  
+  byte high = ADCH;     // unlocks both
+  long result = (high<<8) | low;
+  result = 1125300L / result;     // calculate Vcc (in mV); 1125300 = 1.1*1023*1000
+  return result;      // Vcc in millivolts
+}
+
+int Transmitting(byte command, int data) {
+  if (last_data[command] != data) {
+    last_data[command] = data;
+    mydata.command = command;
+    mydata.data = data;
+    //digitalWrite(led_pin, HIGH);      // led on
+    ET.sendData();
+    //digitalWrite(led_pin, LOW);      // led off
+    mydata.packet_id++;
   }
-
-  delay(random(500, 1500));
-//  digitalWrite(led_pin, HIGH);
-//  digitalWrite(led_pin, LOW);
+  delay(random(1000, 2000));
 }
 
 void setup() { 
-//  Serial.begin(9600);
-//  Serial.println(data);
+  //Serial.begin(9600);
+  //Serial.println(data);
   dht.begin();
-  pinMode(led_pin, OUTPUT);
+  //pinMode(led_pin, OUTPUT);
   vw_set_tx_pin(transmit_pin);
   vw_setup(2000);
   ET.begin(details(mydata));
@@ -84,10 +60,10 @@ void setup() {
   randomSeed(analogRead(0));
 }
 
-  void loop() {
-    Transmitting ( 1, round((double)dht.readTemperature()));
-    Transmitting ( 2, round((double)dht.readHumidity()));
-    Transmitting ( 3, round((double)dht.computeHeatIndex((double)dht.readTemperature(), (double)dht.readHumidity(), false)));
-    Transmitting ( 4, (double)(analogRead(inpin) / 1023.0) * vcc * 100);
-    LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+void loop() {
+  Transmitting (0, round((float)readVcc()/1000*10));
+  Transmitting (1, round((float)dht.readTemperature()*10));
+  Transmitting (2, round((float)dht.readHumidity()*10));
+  Transmitting (3, round(((float)dht.computeHeatIndex((float)dht.readTemperature(), (float)dht.readHumidity(), false))*10));
+  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
 }
