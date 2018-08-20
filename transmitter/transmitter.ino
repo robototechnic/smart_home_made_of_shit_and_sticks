@@ -1,25 +1,29 @@
 // transmitter
+//#include <EEPROM.h>
 #include <VirtualWire.h> 
 #include <EasyTransferVirtualWire.h> 
+#include <Keeloq.h>
 #include <LowPower.h>
 #include <DHT.h>
 #define DHTPIN 3      // to which contact the sensor is connected
 #define DHTTYPE DHT22
 
 EasyTransferVirtualWire ET;
+Keeloq k(0x01320334,0x05063708);      //keys
 DHT dht(DHTPIN, DHTTYPE);
 
-//const byte led_pin = 13;      // built-in led
-const byte transmit_pin = 2;      // to which contact the transmitter is connected
-int last_data[4];     // count of commands
+//unsigned int packet_id = 40000;
+int last_data[4];     // array with the latest data, count of cells = count of commands
 
-struct SEND_DATA_STRUCTURE {      // information package
-  byte source_id = 2;     // this device id
-  byte destination_id = 1;     // which device will receive the signal
-  unsigned int packet_id; 
-  byte command;     // command number
-  int data;
-} mydata;     // name of structure
+struct SEND_DATA_STRUCTURE {      // structure with information for transmit
+  byte source_id = 1;     // this device id, max 255 devices
+  unsigned int destination_id = 1111;     // which device receive the signal
+  unsigned int packet_id;     // package number
+  unsigned int random_count;      // it is necessary for the identical data after encryption to be different
+  byte command;     // command number: 0 - supply voltage; 1 - temperature; etc...
+  unsigned int data;      // unencrypted data
+  unsigned long crypt;      // encrypted data
+} mydata;     // structure variable
 
 long readVcc() {
   // read 1.1V reference against AVcc
@@ -40,9 +44,12 @@ int Transmitting(byte command, int data) {
     last_data[command] = data;
     mydata.command = command;
     mydata.data = data;
-    //digitalWrite(led_pin, HIGH);      // led on
+    mydata.random_count = random(1, 42000);     // unsigned long can't make more than that!
+    unsigned long raw = mydata.random_count * 100000 + mydata.destination_id;
+    mydata.crypt = k.encrypt(raw);
+    //digitalWrite(13, HIGH);      // 13 - built-in led, led on
     ET.sendData();
-    //digitalWrite(led_pin, LOW);      // led off
+    //digitalWrite(13, LOW);      // 13 - built-in led, led off
     mydata.packet_id++;
   }
   delay(random(1000, 2000));
@@ -52,18 +59,18 @@ void setup() {
   //Serial.begin(9600);
   //Serial.println(data);
   dht.begin();
-  //pinMode(led_pin, OUTPUT);
-  vw_set_tx_pin(transmit_pin);
-  vw_setup(2000);
+  //pinMode(13, OUTPUT);      // 13 - built-in led
+  vw_set_tx_pin(2);     // to which contact the transmitter is connected
+  vw_setup(2000);     // speed bits per second 
   ET.begin(details(mydata));
   analogReference(INTERNAL);
   randomSeed(analogRead(0));
 }
 
 void loop() {
-  Transmitting (0, round((float)readVcc()/1000*10));
-  Transmitting (1, round((float)dht.readTemperature()*10));
-  Transmitting (2, round((float)dht.readHumidity()*10));
-  Transmitting (3, round(((float)dht.computeHeatIndex((float)dht.readTemperature(), (float)dht.readHumidity(), false))*10));
+  Transmitting (0, round((float)readVcc()/1000*10));      // battery charge
+  Transmitting (1, round((float)dht.readTemperature()));
+  Transmitting (2, round((float)dht.readHumidity()));
+  Transmitting (3, round((float)dht.computeHeatIndex((float)dht.readTemperature(), (float)dht.readHumidity(), false)));
   LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
 }
