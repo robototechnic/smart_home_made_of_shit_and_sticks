@@ -16,3 +16,5 @@ VirtualWire - http://www.airspayce.com/mikem/arduino/VirtualWire/
 EasyTransferVirtualWire - https://github.com/madsci1016/Arduino-EasyTransfer/tree/master/EasyTransferVirtualWire
 
 Low-Power - https://github.com/rocketscream/Low-Power
+
+Keeloq - https://github.com/franksmicro/Arduino (outdated, need to edit the source code)
