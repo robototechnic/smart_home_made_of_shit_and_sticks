@@ -47,9 +47,9 @@ int Transmitting(byte command, int data) {
     unsigned long raw = mydata.random_number * 100000 + transmitter_id;
     mydata.crypt = k.encrypt(raw);
     mydata.data = k.encrypt(mydata.data);
-    //digitalWrite(13, HIGH);      // 13 - built-in led, led on
+    digitalWrite(13, HIGH);      // led on
     ET.sendData();
-    //digitalWrite(13, LOW);      // 13 - built-in led, led off
+    digitalWrite(13, LOW);      // led off
     mydata.packet_id++;
   }
   delay(random(1000, 2000));
@@ -59,9 +59,10 @@ void setup() {
   //Serial.begin(9600);
   //Serial.println(data);
   dht.begin();
-  //pinMode(13, OUTPUT);      // 13 - built-in led
+  pinMode(13, OUTPUT);      // 13 - built-in led
+  pinMode(4, OUTPUT);      // 4 - pin for sensor and transmitter power supply
   vw_set_tx_pin(2);     // to which contact the transmitter is connected
-  vw_setup(2000);     // speed bits per second 
+  vw_setup(2000);     // speed bits per second
   ET.begin(details(mydata));
   analogReference(INTERNAL);
   randomSeed(analogRead(0));
@@ -70,12 +71,12 @@ void setup() {
   }
 }
 
-
-
-void loop() {     // commands with data 
+void loop() {     // commands with data
+  digitalWrite(4, HIGH);      // power up the sensor and transmitter
   Transmitting (0, round((float)readVcc()/1000*10));      // battery charge
   Transmitting (1, round((float)dht.readTemperature()));
   Transmitting (2, round((float)dht.readHumidity()));
   Transmitting (3, round((float)dht.computeHeatIndex((float)dht.readTemperature(), (float)dht.readHumidity(), false)));
+  digitalWrite(4, LOW);      // power down the sensor and transmitter
   LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
 }

@@ -4,7 +4,7 @@
 #include <Keeloq.h>
 
 EasyTransferVirtualWire ET;
-Keeloq k(0x01320334,0x05063708);      // keys
+Keeloq k(0x01320334, 0x05063708);     // keys
 
 const byte this_device_id = 1;
 const byte count_of_transmitters = 7;
@@ -47,7 +47,7 @@ void loop() {
               Serial.print("Receiver ID: ");
               Serial.print(mydata.receiver_id);
               Serial.print(" Transmitter ID: ");
-              Serial.print(transmitter_id[i]); 
+              Serial.print(transmitter_id[i]);
               Serial.print(" Packet ID: ");
               Serial.print(mydata.packet_id);
               Serial.print(" Command: ");
@@ -59,18 +59,18 @@ void loop() {
             } else {      // sync packet
               if (b == false) {     // first time, ignore
                 b = true;
-                Serial.println("Desync!");
+                //Serial.println("Desync!");
               } else {      // second time, syncing. Everything will be ok on the third time
                 b = false;
-                Serial.println("Try to syncing...");
+                //Serial.println("Try to syncing...");
                 packet_id[i] = mydata.packet_id;
                 packet_id[i]++;
               }
             }
             break;
-          } else Serial.println("Transmitter ID mismatch!");
+          } //else Serial.println("Transmitter ID mismatch!");
         }
-      } else Serial.println("Random number mismatch!");
+      } //else Serial.println("Random number mismatch!");
       digitalWrite(13, LOW);      // 13 - built-in led, led off
     }
   }
