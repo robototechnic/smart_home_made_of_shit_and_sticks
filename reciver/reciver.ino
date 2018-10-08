@@ -8,7 +8,7 @@ Keeloq k(0x01320334, 0x05063708);     // keys
 
 const byte this_device_id = 1;
 const byte count_of_transmitters = 7;
-unsigned int transmitter_id[count_of_transmitters] = {2222, 2, 3, 4, 5, 6, 7};     // array with id's of known transmitters. It is better to put first identifier of transmitter, which sends information often
+unsigned int transmitter_id[count_of_transmitters] = {2222, 2221, 3, 4, 5, 6, 7};     // array with id's of known transmitters. It is better to put first identifier of transmitter, which sends information often
 unsigned int packet_id[count_of_transmitters];
 bool b = false;       // trigger for synchronization
 
@@ -53,7 +53,7 @@ void loop() {
               Serial.print(" Command: ");
               Serial.print(mydata.command);
               Serial.print(" Data: ");
-              if (mydata.command == 0) {      // battery charge data
+              if (mydata.command == 2) {      // battery charge data
                 Serial.println((float)mydata.data / 10, 1);     // float
               } else Serial.println(mydata.data);      // other data, integer
             } else {      // sync packet
