@@ -4,19 +4,20 @@
 #include <Keeloq.h>
 #include <LowPower.h>
 #include <DHT.h>
-#define DHTPIN 4     // to which contact the temperature sensor is connected
+#define DHTPIN 4
 #define DHTTYPE DHT22
-#define analogPin A0     // pin for reading random numbers
-#define interruptPin INT0     // interrupt 0 = 2 pin on arduino pro mini
+#define pin_analog A3     // pin for reading random numbers
+#define pin_interrupt INT0
+#define pin_photoresistor A0
 
 EasyTransferVirtualWire ET;
 Keeloq k(0x01320334, 0x05063708);    // keys
 DHT dht(DHTPIN, DHTTYPE);
 
-byte pin_hc_sr501 = 2;     // to which contact the motion sensor is connected
-const byte pin_transmitter = 3;     // to which contact the transmitter is connected
+byte pin_motion_sensor = 2;
+const byte pin_transmitter = 3;
 const byte pin_power = 5;     // pin for sensor and transmitter power supply
-const byte pin_led = 13;     // 13 - built-in led
+const byte pin_led = 13;
 int last_data[8];     // array with the latest data, count of cells = count of commands
 unsigned int transmitter_id = 2221;     // this device id, max 65535
 
@@ -26,16 +27,16 @@ byte abcon[9] = {0xFF,0x01,0x79,0xA0,0x00,0x00,0x00,0x00,0xE6};
 byte abcoff[9] = {0xFF,0x01,0x79,0x00,0x00,0x00,0x00,0x00,0x86};
 unsigned char response[9];
 
-struct SEND_DATA_STRUCTURE {     // structure with information for transmit
+struct SEND_DATA_STRUCTURE {
   byte receiver_id = 1;     // which device receive the signal, max 255
-  unsigned int packet_id = 1;     // package number
-  unsigned int random_number;     // it is necessary for the identical data after encryption to be different
-  byte command;     // command number: 0 - supply voltage; 1 - temperature; etc...
-  unsigned long data;     // useful data
+  unsigned int packet_id = 1;
+  unsigned int random_number;      // discriminator it is necessary for the identical data after encryption to be different
+  byte command;     // command number: 0 - sleep bit or synchronization cycle; 1 - motion detect; 2 - battery charge data; 3 - temperature; 4 - humidity; 5 - compute temperature; 6 - CO2; 7 - lighting level
+  unsigned long data;
   unsigned long service;     // service data
-} mydata;     // structure variable
+} mydata;
 
-long readVcc() {
+long readVcc() {     // I do not understand what is happening. Not my code.
   // read 1.1V reference against AVcc
   // set the reference to Vcc and the measurement to the internal 1.1V reference
   ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
@@ -50,41 +51,40 @@ long readVcc() {
 }
 
 void Transmitting(byte command, unsigned int data) {
-//  if (last_data[command] != data || command == 1) {     // if data is different from the last, or a motion detection command
+  if (last_data[command] != data){
     last_data[command] = data;
     mydata.command = command;
     mydata.data = data;
     mydata.random_number = random(1, 42000);     // unsigned long can't make more than that!
-    unsigned long raw = mydata.random_number * 100000 + transmitter_id;
-    mydata.service = k.encrypt(raw);
+    mydata.service = mydata.random_number * 100000 + transmitter_id;
+    mydata.service = k.encrypt(mydata.service);
     mydata.data = k.encrypt(mydata.data);
-//    digitalWrite(pin_led, HIGH);     // led on
+//    digitalWrite(pin_led, HIGH);
     ET.sendData();
-//    digitalWrite(pin_led, LOW);     // led off
+//    digitalWrite(pin_led, LOW);
     mydata.packet_id++;
-//  }
+  }
   delay(random(1000, 2000));
 }
 
 void setup() {
   Serial.begin(9600);
-  //Serial.println(mydata.data);
   dht.begin();
   pinMode(pin_led, OUTPUT);
   pinMode(pin_power, OUTPUT);
   vw_set_tx_pin(pin_transmitter);
-  vw_setup(2000);     // speed bits per second
+  vw_setup(2000);
   ET.begin(details(mydata));
   analogReference(INTERNAL);
-  randomSeed(analogRead(analogPin));
+  randomSeed(analogRead(pin_analog));
   digitalWrite(pin_power, HIGH);
   for (byte i = 0; i < 3; i++) {     // cycle for syncing transmitter and receiver
-    Transmitting(0, i);     // send nothing
+    Transmitting(0, i);
   }
   digitalWrite(pin_power, LOW);
 }
 
-void wakeUp() {     // wake up the controller
+void wakeUp() {
 }
 
 unsigned int co2() {
@@ -107,25 +107,27 @@ unsigned int co2() {
   }
 }
 
-void loop() {     // commands with data
+void loop() {
   for (byte i = 0; i <= 2; i++) {
     digitalWrite(pin_power, HIGH);
-    Transmitting(1, digitalRead(pin_hc_sr501));     // motion detected
-    Transmitting(2, round((float)readVcc() / 100)); // battery charge
+    Transmitting(1, digitalRead(pin_motion_sensor));
+    Transmitting(2, round((float)readVcc() / 100));
     Transmitting(3, round((float)dht.readTemperature()));
     Transmitting(4, round((float)dht.readHumidity()));
     Transmitting(5, round((float)dht.computeHeatIndex((float)dht.readTemperature(), (float)dht.readHumidity(), false)));
     Transmitting(6, round(co2() / 10));
+    Transmitting(7, round((float)analogRead(pin_photoresistor) / 100));
+    
     digitalWrite(pin_power, LOW);
     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
   }
   digitalWrite(pin_power, HIGH);
-  Transmitting(0, 10);
+  Transmitting(0, 10);     // send "I sleep"
   digitalWrite(pin_power, LOW);
-  attachInterrupt(interruptPin, wakeUp, RISING);
-  LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
-  detachInterrupt(interruptPin);
+  attachInterrupt(pin_interrupt, wakeUp, RISING);
+  LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);     // sleep until motion appears
+  detachInterrupt(pin_interrupt);
   digitalWrite(pin_power, HIGH);
-  Transmitting(7, 01);
+  Transmitting(0, 01);     // send "I woke up"
   digitalWrite(pin_power, LOW);
 }

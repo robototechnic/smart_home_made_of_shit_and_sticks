@@ -5,6 +5,8 @@ Sketches for low power wireless climate sensors based on
 
 -DHT22
 
+-MH-Z19
+
 -receivers and transmitters at a frequency of 433 MHz
 
 Libraries:
@@ -17,7 +19,7 @@ EasyTransferVirtualWire - https://github.com/madsci1016/Arduino-EasyTransfer/tre
 
 Low-Power - https://github.com/rocketscream/Low-Power
 
-Keeloq - https://github.com/franksmicro/Arduino (outdated, need to edit the source code)
+Keeloq - https://github.com/franksmicro/Arduino (outdated, need to edit the source code. Fixed in my collection)
 
 MQ135 - https://github.com/GeorgK/MQ135
 
