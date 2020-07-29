@@ -2,7 +2,6 @@
 #include <VirtualWire.h>
 #include <EasyTransferVirtualWire.h>
 #include <Keeloq.h>
-//#include <ArduinoJson.h>
 #define this_device_id 1
 #define count_of_transmitters 7
 #define pin_receiver 2
@@ -13,7 +12,6 @@
 
 EasyTransferVirtualWire ET;
 Keeloq k(0x01320334, 0x05063708);     // keys
-//StaticJsonDocument<50> doc;
 
 unsigned int transmitter_id[count_of_transmitters] = {1, 2, 3, 4, 5, 6, 7};     // array with id's of known transmitters. It is better to put first identifier of transmitter, which sends information often
 unsigned int packet_id[count_of_transmitters];
@@ -75,7 +73,7 @@ void data_human_readable(unsigned long data, byte i){
   Serial.println("}");
  }
 
-void synchronization(byte i) { 
+void synchronization(byte i) {
   if (sync_trigger == false) {     // first time, ignore packet
     sync_trigger = true;
     Serial.println("Desync!");

@@ -9,6 +9,7 @@
 #define pin_led 13
 #define pin_reset 17
 bool soap_or_wather_trigger = false;
+bool recheck = false;
 unsigned long timer;
 unsigned int timer_OTA = 0;
 
@@ -66,9 +67,9 @@ void sound_off() {
 
 bool wait(unsigned int timeMS, byte pin_sensor) {
   timer = millis();
+  debounce:
   while (millis() - timer <= timeMS) {
     if (digitalRead(pin_sensor) == LOW) {
-      tone(pin_sound, 4000, 50);
       return false;
     }
   }
@@ -78,15 +79,15 @@ bool wait(unsigned int timeMS, byte pin_sensor) {
 void loop() {
   start:
   OTA(timer_OTA, pin_reset);
-  if (digitalRead(pin_sensor_on) == LOW) {
+  if (digitalRead(pin_sensor_on) == LOW) {     // hands near
     tone(pin_sound, 4000, 50);
-    if (wait(1000, pin_sensor_off) == true) {
+    if (wait(1000, pin_sensor_off) == true) {     // hands near
       water_on();
       delay(1500);
       water_off();
       delay(1000);
       digitalWrite(pin_soap, LOW);     // soap ON
-      wait(2000, pin_sensor_off);
+      wait(10000, pin_sensor_off);
       digitalWrite(pin_soap, HIGH);     // soap OFF
       if (wait(10000, pin_sensor_on) == true) {
         sound_off();
@@ -95,11 +96,18 @@ void loop() {
       water_on();
       wait(20000, pin_sensor_off);
       water_off();
-    } else {
+    } else {     // hands far
       sound_on();
-      if (wait(5000, pin_sensor_on) == true) {
+      if (wait(5000, pin_sensor_on) == true) {     // hands far
         sound_off();
-      } else {
+        if (wait(5000, pin_sensor_on) == true) {     // hands far
+          sound_off();
+        } else {     // hands close
+          digitalWrite(pin_soap, LOW);     // soap ON
+          wait(30000, pin_sensor_off);
+          digitalWrite(pin_soap, HIGH);     // soap OFF
+        }
+      } else {     // hands near
         water_on();
         wait(30000, pin_sensor_off);
         water_off();

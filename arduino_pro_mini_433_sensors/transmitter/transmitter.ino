@@ -21,7 +21,7 @@ DHT dht(pin_dht, dhttype);
 int last_data[8];     // array with the latest data, count of cells = count of commands
 unsigned int transmitter_id = 1;     // this device id, max 65535
 
-// for CO2 sensor
+// CO2 sensor commands
 byte request[9] = {0xFF,0x01,0x86,0x00,0x00,0x00,0x00,0x00,0x79};
 byte calib[9] = {0xFF,0x01,0x87,0x00,0x00,0x00,0x00,0x00,0x78};
 byte abcon[9] = {0xFF,0x01,0x79,0xA0,0x00,0x00,0x00,0x00,0xE6};
@@ -37,7 +37,7 @@ struct send_data_structure {
   unsigned long service;     // service data
 } mydata;
 
-long readVcc() {     // I do not understand what is happening. Not my code.
+long readVcc() {     // I do not understand what is happening here. Not my code.
   // read 1.1V reference against AVcc
   // set the reference to Vcc and the measurement to the internal 1.1V reference
   ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
@@ -47,7 +47,7 @@ long readVcc() {     // I do not understand what is happening. Not my code.
   byte low  = ADCL;     // must read ADCL first - it then locks ADCH
   byte high = ADCH;     // unlocks both
   long result = (high << 8) | low;
-  result = 1125300L / result;     // calculate Vcc (in mV); 1125300 = 1.1*1023*1000
+  result = 1125300L / result;     // calculate Vcc (in mV); 1125300 = 1.1 * 1023 * 1000
   return result;     // Vcc in millivolts
 }
 
@@ -92,7 +92,9 @@ unsigned int co2() {
   Serial.readBytes(response, 9);
   byte i;
   byte crc = 0;
-  for (i = 1; i < 8; i++) crc+=response[i];
+  for (i = 1; i < 8; i++) {
+    crc += response[i];
+  }
   crc = 255 - crc;
   crc++;
   if (!(response[0] == 0xFF && response[1] == 0x86 && response[8] == crc)) {
@@ -118,7 +120,7 @@ void loop() {
     digitalWrite(pin_power, LOW);
     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
   }
- 
+
   transmitting(0, 0);     // send "I sleep"
   attachInterrupt(pin_interrupt, wakeup, RISING);
   LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);     // sleep until motion appears
