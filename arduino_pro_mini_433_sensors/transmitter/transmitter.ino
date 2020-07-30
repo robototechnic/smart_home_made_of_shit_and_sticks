@@ -98,11 +98,11 @@ unsigned int co2() {
   crc = 255 - crc;
   crc++;
   if (!(response[0] == 0xFF && response[1] == 0x86 && response[8] == crc)) {
-    return 1;
+    return 9999;
   } else {
     unsigned int responseHigh = (unsigned int) response[2];
     unsigned int responseLow = (unsigned int) response[3];
-    unsigned int ppm = (256*responseHigh) + responseLow;
+    unsigned int ppm = (256 * responseHigh) + responseLow;
     return ppm;
   }
 }
@@ -110,6 +110,9 @@ unsigned int co2() {
 void loop() {
   for (byte i = 0; i <= 2; i++) {
     digitalWrite(pin_power, HIGH);
+    if (digitalRead(pin_motion_sensor) == 1) {
+      i = 0;
+    }
     transmitting(1, digitalRead(pin_motion_sensor));
     transmitting(2, round((float)readVcc() / 100));
     transmitting(3, round((float)dht.readTemperature()));
