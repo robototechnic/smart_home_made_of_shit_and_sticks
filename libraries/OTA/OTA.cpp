@@ -12,7 +12,7 @@ v1.0 - First release
 /**************************************************************************/
 
 #include "OTA.h"
-
+  
 void OTA(unsigned int timer_OTA, byte pin_reset) {
   if (timer_OTA == 0 || millis() <= timer_OTA) {
     if (Serial.available()) {

@@ -21,13 +21,6 @@ DHT dht(pin_dht, dhttype);
 int last_data[8];     // array with the latest data, count of cells = count of commands
 unsigned int transmitter_id = 1;     // this device id, max 65535
 
-// CO2 sensor commands
-byte request[9] = {0xFF,0x01,0x86,0x00,0x00,0x00,0x00,0x00,0x79};
-byte calib[9] = {0xFF,0x01,0x87,0x00,0x00,0x00,0x00,0x00,0x78};
-byte abcon[9] = {0xFF,0x01,0x79,0xA0,0x00,0x00,0x00,0x00,0xE6};
-byte abcoff[9] = {0xFF,0x01,0x79,0x00,0x00,0x00,0x00,0x00,0x86};
-unsigned char response[9];
-
 struct send_data_structure {
   byte receiver_id = 1;     // which device receive the signal, max 255
   unsigned int packet_id = 1;
@@ -87,18 +80,27 @@ void wakeup() {
 }
 
 unsigned int co2() {
+  while (Serial.available() > 0) {     // Read the entire buffer before sending the request. Solves communication problems with the sensor.
+    Serial.read();
+  }
+  // MH-Z19 sensor commands
+  byte request[9] = {0xFF,0x01,0x86,0x00,0x00,0x00,0x00,0x00,0x79};
+  /*byte calib[9] = {0xFF,0x01,0x87,0x00,0x00,0x00,0x00,0x00,0x78};
+  byte abcon[9] = {0xFF,0x01,0x79,0xA0,0x00,0x00,0x00,0x00,0xE6};
+  byte abcoff[9] = {0xFF,0x01,0x79,0x00,0x00,0x00,0x00,0x00,0x86};
+  */
+  unsigned char response[9];
   Serial.write(request, 9);
   memset(response, 0, 9);
   Serial.readBytes(response, 9);
-  byte i;
   byte crc = 0;
-  for (i = 1; i < 8; i++) {
+  for (byte i = 1; i < 8; i++) {
     crc += response[i];
   }
   crc = 255 - crc;
   crc++;
   if (!(response[0] == 0xFF && response[1] == 0x86 && response[8] == crc)) {
-    return 9999;
+    return 10;
   } else {
     unsigned int responseHigh = (unsigned int) response[2];
     unsigned int responseLow = (unsigned int) response[3];
