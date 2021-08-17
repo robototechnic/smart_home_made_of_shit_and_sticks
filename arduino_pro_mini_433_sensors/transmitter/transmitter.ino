@@ -4,13 +4,13 @@
 #include <Keeloq.h>
 #include <LowPower.h>
 #include <DHT.h>
-#define pin_dht 4
 #define dhttype DHT22
 #define pin_analog A3     // pin for reading random numbers
 #define pin_interrupt INT0
 #define pin_photoresistor A0
 #define pin_motion_sensor 2
 #define pin_transmitter 3
+#define pin_dht 4
 #define pin_power 5     // pin for sensor and transmitter power supply
 #define pin_led 13
 
@@ -61,21 +61,6 @@ void transmitting(byte command, unsigned int data) {
   delay(random(1000, 2000));
 }
 
-void setup() {
-  Serial.begin(9600);
-  pinMode(pin_power, OUTPUT);
-  pinMode(pin_led, OUTPUT);
-  ET.begin(details(mydata));
-  dht.begin();
-  vw_set_tx_pin(pin_transmitter);
-  vw_setup(2000);
-  analogReference(INTERNAL);
-  randomSeed(analogRead(pin_analog));
-  for (byte i = 0; i < 3; i++) {     // cycle for syncing transmitter and receiver
-    transmitting(0, i);
-  }
-}
-
 void wakeup() {
 }
 
@@ -109,8 +94,29 @@ unsigned int co2() {
   }
 }
 
+void setup() {
+  Serial.begin(9600);
+  pinMode(pin_power, OUTPUT);
+  pinMode(pin_led, OUTPUT);
+  ET.begin(details(mydata));
+  dht.begin();
+  vw_set_tx_pin(pin_transmitter);
+  vw_setup(2000);
+  analogReference(INTERNAL);
+  randomSeed(analogRead(pin_analog));
+  for(int i = 0; i < 3; i++) {
+    digitalWrite(pin_led, HIGH);
+    delay(200);
+    digitalWrite(pin_led, LOW);
+    delay(200);
+  }
+  for (byte i = 0; i < 3; i++) {     // cycle for syncing transmitter and receiver
+    transmitting(0, i);
+  }
+}
+
 void loop() {
-  for (byte i = 0; i <= 2; i++) {
+  for (byte i = 0; i < 3; i++) {
     digitalWrite(pin_power, HIGH);
     if (digitalRead(pin_motion_sensor) == 1) {
       i = 0;

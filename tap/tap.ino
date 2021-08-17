@@ -14,7 +14,6 @@ unsigned long timer;
 unsigned int timer_OTA = 1000;
 
 void setup() {
-  OTA(timer_OTA, pin_reset);
   pinMode(pin_sensor_on, INPUT_PULLUP);
   pinMode(pin_sensor_off, INPUT_PULLUP);
   digitalWrite(pin_water_on, HIGH);
@@ -25,8 +24,9 @@ void setup() {
   pinMode(pin_soap, OUTPUT);
   pinMode(pin_sound, OUTPUT);
   pinMode(pin_led, OUTPUT);
-  Serial.begin(19200);     // the speed of this board when write a sketch, you can see it in "boards.txt"
   pinMode(pin_reset,OUTPUT);
+  Serial.begin(19200);     // the speed of this board when write a sketch, you can see it in "boards.txt"
+    
   for(int i = 0; i < 3; i++) {
     digitalWrite(pin_led, HIGH);
     delay(100);
@@ -76,6 +76,7 @@ bool wait(unsigned int timeMS, byte pin_sensor) {     // standby function
 }
 
 void loop() {
+  OTA(timer_OTA, pin_reset);
   start:
   if (digitalRead(pin_sensor_on) == LOW) {     // (1)bring hands to the tap
     tone(pin_sound, 4000, 50);
@@ -85,7 +86,7 @@ void loop() {
       water_off();
     } else {     // (2)take hands off the tap
       sound_on();
-      if (wait(5000, pin_sensor_on) == true) {     // (3)hold hands far
+      if (wait(3000, pin_sensor_on) == true) {     // (3)hold hands far
         sound_off();
         goto start;
       } else {     // (3)bring hands to the tap
@@ -93,9 +94,10 @@ void loop() {
         wait(1500, pin_sensor_off);     // wait until the timer expires or the interrupt is triggered
         water_off();
         digitalWrite(pin_soap, LOW);     // soap ON
-        delay(1500);
+        delay(1000);
         //wait(5000, pin_sensor_off);
         digitalWrite(pin_soap, HIGH);     // soap OFF
+        delay(3000);
         if (wait(10000, pin_sensor_on) == true) {     // (4)don`t bring hands to the tap
           sound_off();
           goto start;

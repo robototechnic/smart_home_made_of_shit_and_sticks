@@ -6,4 +6,4 @@ low power wireless climate sensors
 library for update scetch OTA
 
 TODO
-Finish the project(this project will never be completed)
+Finish the project(this project will never be finished)
