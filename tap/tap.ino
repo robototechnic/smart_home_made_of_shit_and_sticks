@@ -26,7 +26,7 @@ void setup() {
   pinMode(pin_led, OUTPUT);
   pinMode(pin_reset,OUTPUT);
   Serial.begin(19200);     // the speed of this board when write a sketch, you can see it in "boards.txt"
-    
+
   for(int i = 0; i < 3; i++) {
     digitalWrite(pin_led, HIGH);
     delay(100);
@@ -36,76 +36,82 @@ void setup() {
 }
 
 void water_on() {
-  digitalWrite(pin_water_on, LOW);
   digitalWrite(pin_led, HIGH);
+  digitalWrite(pin_water_on, LOW);
   delay(100);
   digitalWrite(pin_water_on, HIGH);
   delay(100);
 }
 
 void water_off() {
-  digitalWrite(pin_water_off, LOW);
   digitalWrite(pin_led, LOW);
+  digitalWrite(pin_water_off, LOW);
   delay(100);
   digitalWrite(pin_water_off, HIGH);
   delay(100);
 }
 
 void sound_on() {
-  for (unsigned int i = 0; i <= 15000; i = i + 6) {
+  for (unsigned int i = 0; i <= 15000; i = i + 7) {
     tone(pin_sound, i);
   }
   noTone(pin_sound);
 }
 
 void sound_off() {
-  for (unsigned int i = 15000; i >= 4; i = i - 6) {
+  for (unsigned int i = 15000; i >= 7; i = i - 7) {
     tone(pin_sound, i);
   }
   noTone(pin_sound);
 }
 
-bool wait(unsigned int timeMS, byte pin_sensor) {     // standby function 
+byte soap_cycle() {
+  if (wait(2000, pin_sensor_on) == false) {     // bring hands to the tap
+    digitalWrite(pin_soap, LOW);     // soap ON
+    delay(500);
+    wait(5000, pin_sensor_off);
+    digitalWrite(pin_soap, HIGH);     // soap OFF
+    delay(2000);
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+bool wait(unsigned int timeMS, byte pin_sensor) {     // standby function
   timer = millis();
   while (millis() - timer <= timeMS) {
     if (digitalRead(pin_sensor) == LOW) {     // interrupt
       return false;
     }
   }
-  return true;
+  return true;     // standby ended
 }
 
 void loop() {
-  OTA(timer_OTA, pin_reset);
+  //OTA(timer_OTA, pin_reset);
   start:
-  if (digitalRead(pin_sensor_on) == LOW) {     // (1)bring hands to the tap
-    tone(pin_sound, 4000, 50);
-    if (wait(1000, pin_sensor_off) == true) {     // (2)hold hands near
-      water_on();
-      wait(30000, pin_sensor_off);     // wait until the timer expires or the interrupt is triggered
+  if (digitalRead(pin_sensor_on) == LOW) {     // bring hands to the tap
+    water_on();
+    if (wait(3000, pin_sensor_off) == false) {     // wait 3 seconds to wet hands
       water_off();
-    } else {     // (2)take hands off the tap
-      sound_on();
-      if (wait(3000, pin_sensor_on) == true) {     // (3)hold hands far
+      goto start;
+    }
+    sound_on();     // signal that you can turn on the soap
+    if (wait(1000, pin_sensor_off) == false) {     // remove hands within 1 second  
+      water_off();
+      if (soap_cycle() == 1) {
         sound_off();
         goto start;
-      } else {     // (3)bring hands to the tap
+      }
+      if (wait(10000, pin_sensor_on) == false) {
         water_on();
-        wait(1500, pin_sensor_off);     // wait until the timer expires or the interrupt is triggered
-        water_off();
-        digitalWrite(pin_soap, LOW);     // soap ON
-        delay(1000);
-        //wait(5000, pin_sensor_off);
-        digitalWrite(pin_soap, HIGH);     // soap OFF
-        delay(3000);
-        if (wait(10000, pin_sensor_on) == true) {     // (4)don`t bring hands to the tap
-          sound_off();
-          goto start;
-        }
-        water_on();
-        wait(20000, pin_sensor_off);
-        water_off();
+      } else {
+        sound_off();
+        goto start;
       }
     }
+    wait(20000, pin_sensor_off);     // wait until the timer expires or the interrupt is triggered
+    water_off();
   }
 }
