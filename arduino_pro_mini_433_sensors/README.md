@@ -1,7 +1,7 @@
 # arduino_pro_mini_433_sensors
 Sketches for low power wireless climate sensors based on
 
--arduino pro mini
+-arduino pro mini. You need boards with the same clock generators
 
 -DHT22
 

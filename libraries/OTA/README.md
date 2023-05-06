@@ -1,5 +1,5 @@
 # Library for autoreset arduino and write sketch OTA.
 
-Communication occurs using HC-12
+Communication occurs using HC-12. You must set the baud rate of HC-12 to the same baud rate of arduino board when writing the sketch, you can see this in "boards.txt" 
 
-Board restart occurs with an optocoupler
+The board is restarted by an optocoupler

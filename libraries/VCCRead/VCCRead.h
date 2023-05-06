@@ -1,10 +1,10 @@
 /**************************************************************************/
 /*!
-@file     OTA.h
+@file     VCCRead.h
 @author   robototechnic
 @license  GNU LGPLv3
 
-Library for autoreset arduino and write sketch OTA.
+Library for reading the supply voltage of the board. Can be used to control battery charge
 
 @section  HISTORY
 
@@ -12,10 +12,10 @@ v1.0 - First release
 */
 /**************************************************************************/
 
-#ifndef OTA_h
-#define OTA_h
+#ifndef VCCRead_h
+#define VCCRead_h
 #include "Arduino.h"
 
-void OTA(unsigned int timer_OTA, byte pin_reset);
+int VCCRead();
 
 #endif

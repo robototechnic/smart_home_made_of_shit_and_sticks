@@ -2,11 +2,11 @@
 #define pin_led 13
 #define pin_reset 17
 unsigned long timer;
-unsigned int timer_OTA = 0;     // how long after start-up can you flash the board
+unsigned int timer_OTA = 10000;     // how long after start-up can you flash the board
 bool ledState = LOW; 
 
 void setup() {
-  Serial.begin(19200);     // the speed of this board when write a sketch, you can see it in "boards.txt"
+  Serial.begin(57600);     // the speed of this board when write a sketch, you can see it in "boards.txt"
   pinMode(pin_reset,OUTPUT);
   pinMode(pin_led, OUTPUT);
   timer = millis();

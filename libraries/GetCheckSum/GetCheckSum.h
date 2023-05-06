@@ -1,10 +1,10 @@
 /**************************************************************************/
 /*!
-@file     OTA.h
+@file     GetCheckSum.h
 @author   robototechnic
 @license  GNU LGPLv3
 
-Library for autoreset arduino and write sketch OTA.
+Library for checksum calculation. The value is stored in one byte.
 
 @section  HISTORY
 
@@ -12,10 +12,10 @@ v1.0 - First release
 */
 /**************************************************************************/
 
-#ifndef OTA_h
-#define OTA_h
+#ifndef GetCheckSum_h
+#define GetCheckSum_h
 #include "Arduino.h"
 
-void OTA(unsigned int timer_OTA, byte pin_reset);
+byte GetCheckSum(byte* data, int length);
 
 #endif

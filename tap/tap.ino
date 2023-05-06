@@ -52,14 +52,14 @@ void water_off() {
 }
 
 void sound_on() {
-  for (unsigned int i = 0; i <= 15000; i = i + 7) {
+  for (unsigned int i = 0; i <= 15000; i = i + 5) {
     tone(pin_sound, i);
   }
   noTone(pin_sound);
 }
 
 void sound_off() {
-  for (unsigned int i = 15000; i >= 7; i = i - 7) {
+  for (unsigned int i = 15000; i >= 7; i = i - 5) {
     tone(pin_sound, i);
   }
   noTone(pin_sound);
@@ -71,7 +71,7 @@ byte soap_cycle() {
     delay(500);
     wait(5000, pin_sensor_off);
     digitalWrite(pin_soap, HIGH);     // soap OFF
-    delay(2000);
+    delay(3000);
     return 0;
   } else {
     return 1;

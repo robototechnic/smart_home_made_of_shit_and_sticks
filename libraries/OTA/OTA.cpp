@@ -5,12 +5,14 @@
 @license  GNU LGPLv3
 
 Library for autoreset arduino and write sketch OTA.
+
 @section  HISTORY
 
 v1.0 - First release
 */
 /**************************************************************************/
 
+#include "Arduino.h"
 #include "OTA.h"
   
 void OTA(unsigned int timer_OTA, byte pin_reset) {
