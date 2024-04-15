@@ -1,3 +1,5 @@
+этот репозиторий устарел, актуальный находится по ссылке https://gitflic.ru/project/robototechnic/shmosas
+
 # set of sketches for creating a smart home based on arduino
 
 Include:
